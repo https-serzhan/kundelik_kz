@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="kz" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Күнделік — Студенттік портал</title>
+  <link rel="icon" href="assets/college-logo.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <!-- Mobile top bar -->
+  <header class="mobile-bar">
+    <button class="icon-btn" id="menuToggle" aria-label="menu">
+      <svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </button>
+    <span class="mobile-title" id="mobileTitle">Күнделік</span>
+    <button class="icon-btn" id="themeToggleMobile" aria-label="theme">
+      <svg viewBox="0 0 24 24" class="i-sun"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg>
+    </button>
+  </header>
+
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-logo"><img src="assets/college-logo.svg" alt="College logo" /></div>
+        <div class="brand-text">
+          <strong data-i18n="appName">Күнделік</strong>
+          <span data-i18n="appSub">Студенттік портал</span>
+        </div>
+      </div>
+
+      <nav class="nav" id="nav">
+        <a href="#home"       data-route="home"       class="nav-item"><span class="nav-ico" data-ico="home"></span><span data-i18n="nav_home">Басты бет</span></a>
+        <a href="#profile"    data-route="profile"    class="nav-item"><span class="nav-ico" data-ico="profile"></span><span data-i18n="nav_profile">Жеке кабинет</span></a>
+        <a href="#grades"     data-route="grades"     class="nav-item"><span class="nav-ico" data-ico="grades"></span><span data-i18n="nav_grades">Бағалар</span></a>
+        <a href="#schedule"   data-route="schedule"   class="nav-item"><span class="nav-ico" data-ico="schedule"></span><span data-i18n="nav_schedule">Сабақ кестесі</span></a>
+        <a href="#homework"   data-route="homework"   class="nav-item"><span class="nav-ico" data-ico="homework"></span><span data-i18n="nav_homework">Үй тапсырмасы</span></a>
+        <a href="#attendance" data-route="attendance" class="nav-item"><span class="nav-ico" data-ico="attendance"></span><span data-i18n="nav_attendance">Қатысу</span></a>
+        <a href="#chat"       data-route="chat"       class="nav-item"><span class="nav-ico" data-ico="chat"></span><span data-i18n="nav_chat">Чат</span></a>
+        <a href="#files"      data-route="files"      class="nav-item"><span class="nav-ico" data-ico="files"></span><span data-i18n="nav_files">Файлдар</span></a>
+        <a href="#exams"      data-route="exams"      class="nav-item"><span class="nav-ico" data-ico="exams"></span><span data-i18n="nav_exams">Емтихан</span></a>
+      </nav>
+
+      <div class="sidebar-foot">
+        <div class="mini-profile">
+          <div class="avatar" id="sideAvatar">АС</div>
+          <div class="mini-profile-text">
+            <strong id="sideName">—</strong>
+            <span id="sideGroup">—</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="backdrop" id="backdrop"></div>
+
+    <!-- Main -->
+    <main class="main">
+      <header class="topbar">
+        <h1 class="page-title" id="pageTitle">—</h1>
+        <div class="topbar-actions">
+          <div class="lang-switch" id="langSwitch">
+            <button data-lang="kz" class="active">KZ</button>
+            <button data-lang="ru">RU</button>
+          </div>
+          <button class="icon-btn theme-btn" id="themeToggle" aria-label="theme">
+            <svg viewBox="0 0 24 24" class="i-sun"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg>
+            <svg viewBox="0 0 24 24" class="i-moon"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <div class="view" id="view"></div>
+    </main>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

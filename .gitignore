@@ -5,3 +5,7 @@ uploads/
 *.db-wal
 *.db-shm
 .DS_Store
+.idea/
+test/test-uploads/
+test/test-admin-uploads/
+test/test-iso-uploads/

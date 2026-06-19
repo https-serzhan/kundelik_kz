@@ -42,6 +42,7 @@ function createApp() {
   app.use("/api", require("./routes/homework.routes"));
   app.use("/api", require("./routes/files.routes"));
   app.use("/api", require("./routes/chat.routes"));
+  app.use("/api/ai", require("./routes/ai.routes"));
 
   app.use(express.static(path.join(__dirname, "..", "public")));
   return app;

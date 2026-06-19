@@ -6,6 +6,8 @@ const { requireAdmin, hashPassword } = require("../auth");
 const { seedUser } = require("../seed");
 const { subjectTotal, computeGPA } = require("../lib/gpa");
 const { upload } = require("../lib/upload");
+const { askAsAdmin, checkRateLimit } = require("../lib/gemini");
+const { studentContext, adminRoster } = require("../lib/student-context");
 
 const router = express.Router();
 router.use(requireAdmin);
@@ -658,6 +660,81 @@ router.delete("/announcements/:id", (req, res) => {
   const info = db.prepare("DELETE FROM announcements WHERE id = ?").run(req.params.id);
   if (!info.changes) return res.status(404).json({ error: "not_found" });
   res.json({ ok: true });
+});
+
+// ===== ИИ-ассистент преподавателя =====
+// История диалога привязана к user_id админа (одна нить на преподавателя).
+
+const AI_MAX_INPUT = 1000;
+const AI_HISTORY_LIMIT = 20;
+
+function aiRowMsg(m) {
+  return { id: m.id, role: m.role, text: m.text, createdAt: m.created_at };
+}
+
+function aiInsertMsg(adminId, role, text) {
+  const info = db.prepare(
+    "INSERT INTO ai_messages (user_id, role, text, created_at) VALUES (?,?,?,?)"
+  ).run(adminId, role, text, new Date().toISOString());
+  return db.prepare("SELECT * FROM ai_messages WHERE id = ?").get(info.lastInsertRowid);
+}
+
+// История переписки преподавателя с ИИ
+router.get("/ai/history", (req, res) => {
+  const rows = db.prepare(
+    "SELECT * FROM ai_messages WHERE user_id = ? ORDER BY id DESC LIMIT ?"
+  ).all(req.user.id, AI_HISTORY_LIMIT).reverse();
+  res.json(rows.map(aiRowMsg));
+});
+
+// Отправить вопрос → получить ответ ИИ.
+// Тело: { text, studentId?, lang }. Если studentId задан — контекст одного студента,
+// иначе — сводка по всем студентам группы (зона риска и т.п.).
+router.post("/ai/chat", async (req, res, next) => {
+  try {
+    const text = String((req.body && req.body.text) || "").trim();
+    if (!text || text.length > AI_MAX_INPUT) {
+      return res.status(400).json({ error: "invalid_input" });
+    }
+    if (!checkRateLimit(req.user.id)) {
+      return res.status(429).json({ error: "rate_limited" });
+    }
+    const lang = (req.body && req.body.lang) || "kz";
+    const studentId = req.body && req.body.studentId ? String(req.body.studentId) : "";
+
+    let student = null;
+    let ctx = null;
+    let roster = null;
+    if (studentId) {
+      const u = getStudentByExternalId(studentId);
+      if (u) {
+        student = rowUser(u);
+        ctx = studentContext(u.id);
+      }
+    } else {
+      roster = adminRoster();
+    }
+
+    const history = db.prepare(
+      "SELECT * FROM ai_messages WHERE user_id = ? ORDER BY id DESC LIMIT 10"
+    ).all(req.user.id).reverse().map(aiRowMsg);
+
+    const userMsg = aiRowMsg(aiInsertMsg(req.user.id, "user", text));
+
+    let reply;
+    try {
+      reply = await askAsAdmin({ admin: req.user, student, ctx, roster, history, userText: text, lang });
+    } catch (e) {
+      if (e && e.code === "ai_rate_limited") return res.status(429).json({ error: "rate_limited" });
+      reply = lang === "ru"
+        ? "ИИ сейчас недоступен. Попробуйте чуть позже."
+        : "ЖИ қазір қолжетімсіз. Сәл кейін қайталап көріңіз.";
+    }
+    const assistantMsg = aiRowMsg(aiInsertMsg(req.user.id, "assistant", reply));
+    res.json({ userMsg, assistantMsg });
+  } catch (e) {
+    next(e);
+  }
 });
 
 module.exports = router;

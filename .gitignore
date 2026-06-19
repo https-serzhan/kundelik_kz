@@ -1,11 +1,24 @@
+# Зависимости
 node_modules/
-uploads/
+
+# Секреты
+.env
+
+# Базы данных и сессии (генерируются при запуске)
 *.db
-*.db-journal
-*.db-wal
 *.db-shm
-.DS_Store
-.idea/
+*.db-wal
+sessions.db
+
+# Загруженные пользователями файлы
+uploads/
+
+# Артефакты тестов
+test/test-*.db
+test/test-*-uploads/
 test/test-uploads/
-test/test-admin-uploads/
-test/test-iso-uploads/
+
+# Системный/мусор
+nul
+.DS_Store
+Thumbs.db

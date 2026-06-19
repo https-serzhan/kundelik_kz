@@ -15,6 +15,7 @@ const I18N = {
     nav_chat: "Чат",
     nav_files: "Файлдар",
     nav_exams: "Емтихан",
+    nav_ai: "ЖИ көмекші",
     nav_admin_overview: "Басқару тақтасы",
     nav_admin_users: "Пайдаланушылар",
     nav_admin_grades: "Бағалар",
@@ -25,6 +26,7 @@ const I18N = {
     nav_admin_attendance: "Қатысу",
     nav_admin_chat: "Әкімшілік чат",
     nav_admin_content: "Контент",
+    nav_admin_ai: "ЖИ көмекші",
 
     // common
     subject: "Пән",
@@ -125,6 +127,30 @@ const I18N = {
     chat_group: "Топ",
     chat_admin: "Әкімшілік",
 
+    // ai
+    nav_ai: "ЖИ көмекші",
+    ai_title: "ЖИ көмекші",
+    ai_placeholder: "Сұрақ жазыңыз... (мысалы: GPA-мды қалай көтеремін?)",
+    ai_send: "Жіберу",
+    ai_greeting: "Сәлем! Мен оқу ЖИ-көмекшімін. Оценкаларың, сабақ кестесің, тапсырмаларың туралы сұрай аласың.",
+    ai_rateLimited: "Тым көп сұрау. Бірнеше минуттан соң қайталаңыз.",
+    ai_error: "ЖИ қатесі. Қайталап көріңіз.",
+    ai_thinking: "Ойланып жатырмын…",
+    ai_clear: "Тазарту",
+    home_aiTitle: "ЖИ-талдау",
+    home_aiGenerate: "Талдау жасау",
+    home_aiGenerating: "Жасалуда…",
+    home_aiEmpty: "ЖИ-талдау алу үшін басыңыз.",
+
+    // admin ai
+    admin_ai_title: "ЖИ-ассистент (оқытушы)",
+    admin_ai_placeholder: "Сұрақ жазыңыз... (мысалы: топтағы кемшіліктер қандай?)",
+    admin_ai_pickScope: "Контекст",
+    admin_ai_allStudents: "Барлық студенттер",
+    admin_ai_student: "Студент",
+    admin_ai_greeting: "Сәлем! Мен оқытушы ЖИ-ассистентімін. Талдап беремін: белгілі бір студентті немесе бүкіл топты таңдап, сұрақ қойыңыз.",
+    admin_ai_noStudents: "Студенттер жоқ — алдын ала студент қосыңыз.",
+
     // files
     files_title: "Файлдар",
     files_all: "Барлық файлдар",
@@ -215,6 +241,7 @@ const I18N = {
     nav_chat: "Чат",
     nav_files: "Файлы",
     nav_exams: "Экзамены",
+    nav_ai: "ИИ-помощник",
     nav_admin_overview: "Панель",
     nav_admin_users: "Пользователи",
     nav_admin_grades: "Оценки",
@@ -225,6 +252,7 @@ const I18N = {
     nav_admin_attendance: "Посещаемость",
     nav_admin_chat: "Админ-чат",
     nav_admin_content: "Контент",
+    nav_admin_ai: "ИИ-помощник",
 
     subject: "Предмет",
     teacher: "Преподаватель",
@@ -316,6 +344,30 @@ const I18N = {
     chat_teacher: "Преподаватель",
     chat_group: "Группа",
     chat_admin: "Администрация",
+
+    // ai
+    nav_ai: "ИИ-помощник",
+    ai_title: "ИИ-помощник",
+    ai_placeholder: "Задайте вопрос... (например: как поднять GPA?)",
+    ai_send: "Отправить",
+    ai_greeting: "Привет! Я учебный ИИ-помощник. Спрашивай про свои оценки, расписание, задания.",
+    ai_rateLimited: "Слишком много запросов. Повторите через пару минут.",
+    ai_error: "Ошибка ИИ. Попробуйте снова.",
+    ai_thinking: "Думаю…",
+    ai_clear: "Очистить",
+    home_aiTitle: "ИИ-анализ",
+    home_aiGenerate: "Сгенерировать анализ",
+    home_aiGenerating: "Анализирую…",
+    home_aiEmpty: "Нажмите, чтобы получить ИИ-анализ вашей успеваемости.",
+
+    // admin ai
+    admin_ai_title: "ИИ-ассистент (преподаватель)",
+    admin_ai_placeholder: "Задайте вопрос... (например: у кого из группы проблемы?)",
+    admin_ai_pickScope: "Контекст",
+    admin_ai_allStudents: "Все студенты",
+    admin_ai_student: "Студент",
+    admin_ai_greeting: "Привет! Я ИИ-ассистент преподавателя. Проанализирую конкретного студента или всю группу — выберите контекст и задайте вопрос.",
+    admin_ai_noStudents: "Студентов нет — сначала добавьте студента.",
 
     files_title: "Файлы",
     files_all: "Все файлы",

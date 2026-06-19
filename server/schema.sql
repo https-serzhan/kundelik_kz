@@ -103,3 +103,13 @@ CREATE TABLE IF NOT EXISTS messages (
   time TEXT,
   created_at TEXT NOT NULL
 );
+
+-- История переписки с ИИ-ассистентом (по одному студенту)
+CREATE TABLE IF NOT EXISTS ai_messages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  role TEXT NOT NULL,          -- 'user' | 'assistant'
+  text TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ai_messages_user_idx ON ai_messages(user_id, id);

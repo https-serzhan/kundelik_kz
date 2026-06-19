@@ -38,6 +38,10 @@ const API = {
   files: () => API.get("/api/files"),
   chats: () => API.get("/api/chats"),
   sendMsg: (id, text) => API.post(`/api/chats/${id}/messages`, { text }),
+  // ИИ-ассистент
+  aiHistory: () => API.get("/api/ai/history"),
+  aiChat: (d) => API.post("/api/ai/chat", d),
+  aiAnalyze: (d) => API.post("/api/ai/analyze", d),
   adminOverview: () => API.get("/api/admin/overview"),
   adminSubjects: () => API.get("/api/admin/subjects"),
   adminUsers: () => API.get("/api/admin/users"),
@@ -65,6 +69,9 @@ const API = {
   deleteExam: (id) => API.delete(`/api/admin/exams/${id}`),
   adminChats: () => API.get("/api/admin/chats"),
   sendAdminMsg: (studentId, text) => API.post(`/api/admin/chats/${encodeURIComponent(studentId)}/messages`, { text }),
+  // ИИ-ассистент преподавателя/админа
+  adminAiHistory: () => API.get("/api/admin/ai/history"),
+  adminAiChat: (d) => API.post("/api/admin/ai/chat", d),
   adminContent: () => API.get("/api/admin/content"),
   createNews: (d) => API.post("/api/admin/news", d),
   deleteNews: (id) => API.delete(`/api/admin/news/${id}`),

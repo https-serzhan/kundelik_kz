@@ -49,7 +49,7 @@ test("admin can login and manage content", async () => {
   const createNews = await agent.post("/api/admin/news").send({
     title: "Admin update",
     tag: "System",
-    date: "2026-06-01",
+    date: dateShift(1),
     text: "Panel update deployed",
   });
   assert.strictEqual(createNews.status, 200);

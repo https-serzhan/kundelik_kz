@@ -12,15 +12,20 @@ const state = {
   adminStudentId: localStorage.getItem("adminStudentId") || "",
   adminHomeworkId: localStorage.getItem("adminHomeworkId") || "",
   adminChatStudentId: localStorage.getItem("adminChatStudentId") || "",
+  adminAiStudentId: localStorage.getItem("adminAiStudentId") || "",
   user: null,
   data: {},
   editProfile: false,
   sidebarCollapsed: localStorage.getItem("sidebarCollapsed") === "1",
+  aiSummary: null,    // результат ИИ-анализа на дашборде (хранится отдельно от data.home, чтобы не затираться перезагрузкой)
+  aiGenerating: false,
 };
 
 window.__onUnauthorized = () => {
   state.user = null;
   state.data = {};
+  state.aiSummary = null;
+  state.aiGenerating = false;
   renderAuth("login");
 };
 
@@ -106,6 +111,7 @@ const ICONS = {
   users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
   shield: '<path d="M12 3l7 4v5c0 5-3.5 8.7-7 9-3.5-.3-7-4-7-9V7l7-4z"/>',
   trash: '<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/>',
+  spark: '<path d="M12 2l2.2 6.8L21 9l-5.5 4 2 7-5.5-4-5.5 4 2-7L3 9l6.8-.2z"/>',
 };
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -135,6 +141,7 @@ function rememberAdminState() {
   localStorage.setItem("adminStudentId", state.adminStudentId || "");
   localStorage.setItem("adminHomeworkId", state.adminHomeworkId || "");
   localStorage.setItem("adminChatStudentId", state.adminChatStudentId || "");
+  localStorage.setItem("adminAiStudentId", state.adminAiStudentId || "");
 }
 
 function ensureAdminStudent(users) {
@@ -367,6 +374,20 @@ function viewHome() {
     </div>
 
     <div class="grid cols-2">
+      <div class="card">
+        <div class="card-head"><h2>${t("home_aiTitle")}</h2>${icon("spark")}</div>
+        <div id="aiAnalysisBody">
+          ${
+            state.aiSummary != null
+              ? `<p style="margin:0;white-space:pre-wrap">${esc(state.aiSummary)}</p>`
+              : state.aiGenerating
+                ? `<div class="li-sub">${esc(t("home_aiGenerating"))}</div>`
+                : `<div class="li-sub">${t("home_aiEmpty")}</div>
+                   <div style="margin-top:12px"><button class="btn btn-primary btn-sm" id="aiGenerateBtn">${t("home_aiGenerate")}</button></div>`
+          }
+        </div>
+      </div>
+
       <div class="card">
         <div class="card-head"><h2>${t("home_today")}</h2><span class="card-sub">${t("today")}</span></div>
         ${
@@ -656,6 +677,30 @@ function viewChat() {
           <button type="submit" class="btn btn-primary">${t("send")}</button>
         </form>
       </div>
+    </div>
+  `;
+}
+
+function viewAi() {
+  const msgs = (state.data.aiHistory || []).slice();
+  const thinking = state.aiThinking ? `<div class="msg them"><div class="msg-author">${esc(t("ai_title"))}</div><div>${esc(t("ai_thinking"))}</div></div>` : "";
+  const bubbles = msgs.length
+    ? msgs.map((m) => `<div class="msg ${m.role === "user" ? "me" : "them"}">
+        ${m.role === "assistant" ? `<div class="msg-author">${esc(t("ai_title"))}</div>` : ""}
+        <div>${esc(m.text)}</div>
+      </div>`).join("")
+    : `<div class="msg them"><div class="msg-author">${esc(t("ai_title"))}</div><div>${esc(t("ai_greeting"))}</div></div>`;
+
+  return `
+    <div class="card chat-window" style="max-width:880px;margin:0 auto;height:calc(100vh - 170px);min-height:440px">
+      <div class="card-head">
+        <h2>${icon("spark")}${t("ai_title")}</h2>
+      </div>
+      <div class="chat-msgs" id="aiMsgs">${bubbles}${thinking}</div>
+      <form class="chat-input" id="aiChatForm">
+        <input type="text" id="aiChatInput" placeholder="${esc(t("ai_placeholder"))}" autocomplete="off" maxlength="1000" />
+        <button type="submit" class="btn btn-primary">${t("ai_send")}</button>
+      </form>
     </div>
   `;
 }
@@ -1098,6 +1143,39 @@ function viewAdminContent() {
   `;
 }
 
+function viewAdminAi() {
+  const users = (state.data.adminUsers && state.data.adminUsers.users) || [];
+  const history = state.data.adminAiHistory || [];
+  const greeting = `<div class="msg them"><div class="msg-author">${esc(t("admin_ai_title"))}</div><div>${esc(t("admin_ai_greeting"))}</div></div>`;
+  const bubbles = history.length
+    ? history.map((m) => `<div class="msg ${m.role === "user" ? "me" : "them"}">
+        ${m.role === "assistant" ? `<div class="msg-author">${esc(t("admin_ai_title"))}</div>` : ""}
+        <div>${esc(m.text)}</div>
+      </div>`).join("")
+    : greeting;
+
+  const scopeSelect = users.length
+    ? `<select id="adminAiScope">
+         <option value=""${state.adminAiStudentId === "" ? " selected" : ""}>${esc(t("admin_ai_allStudents"))}</option>
+         ${users.map((u) => `<option value="${esc(u.studentId)}"${u.studentId === state.adminAiStudentId ? " selected" : ""}>${esc(u.studentId)} · ${esc(tr(u.name))}</option>`).join("")}
+       </select>`
+    : `<div class="empty">${esc(t("admin_ai_noStudents"))}</div>`;
+
+  return `
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-head"><h2>${icon("spark")}${t("admin_ai_title")}</h2></div>
+      <label class="auth-field"><span>${esc(t("admin_ai_pickScope"))}</span>${scopeSelect}</label>
+    </div>
+    <div class="card chat-window" style="height:calc(100vh - 290px);min-height:360px">
+      <div class="chat-msgs" id="adminAiMsgs">${bubbles}</div>
+      <form class="chat-input" id="adminAiChatForm">
+        <input type="text" id="adminAiChatInput" placeholder="${esc(t("admin_ai_placeholder"))}" autocomplete="off" maxlength="1000" />
+        <button type="submit" class="btn btn-primary">${t("ai_send")}</button>
+      </form>
+    </div>
+  `;
+}
+
 const STUDENT_ROUTES = {
   home: { title: "nav_home", icon: "home", render: viewHome, load: () => API.home() },
   profile: { title: "nav_profile", icon: "profile", render: viewProfile, load: () => API.profile() },
@@ -1108,6 +1186,7 @@ const STUDENT_ROUTES = {
   chat: { title: "nav_chat", icon: "chat", render: viewChat, load: () => API.chats() },
   files: { title: "nav_files", icon: "files", render: viewFiles, load: () => API.files() },
   exams: { title: "nav_exams", icon: "exams", render: viewExams, load: () => API.exams() },
+  ai: { title: "nav_ai", icon: "spark", render: viewAi, load: () => API.aiHistory() },
 };
 
 const ADMIN_ROUTES = {
@@ -1121,6 +1200,7 @@ const ADMIN_ROUTES = {
   "admin-attendance": { title: "nav_admin_attendance", icon: "attendance", render: viewAdminAttendance, load: null },
   "admin-chat": { title: "nav_admin_chat", icon: "chat", render: viewAdminChat, load: null },
   "admin-content": { title: "nav_admin_content", icon: "bell", render: viewAdminContent, load: () => API.adminContent() },
+  "admin-ai": { title: "nav_admin_ai", icon: "spark", render: viewAdminAi, load: null },
 };
 
 function routeMap() {
@@ -1151,6 +1231,8 @@ function renderNav() {
 
 async function bootApp() {
   state.data = {};
+  state.aiSummary = null;
+  state.aiGenerating = false;
   document.body.innerHTML = LAYOUT_HTML;
   renderNav();
   applyTheme();
@@ -1167,6 +1249,8 @@ async function bootApp() {
     await API.logout();
     state.user = null;
     state.data = {};
+    state.aiSummary = null;
+    state.aiGenerating = false;
     renderAuth("login");
   });
 
@@ -1188,6 +1272,11 @@ async function loadRoute(route) {
     if (route === "chat") {
       state.data.chats = data;
       if (!state.activeChat && state.data.chats[0]) state.activeChat = state.data.chats[0].id;
+      return;
+    }
+    if (route === "ai") {
+      state.data.aiHistory = data;
+      state.aiThinking = false;
       return;
     }
     state.data[route] = data;
@@ -1258,6 +1347,17 @@ async function loadRoute(route) {
   if (route === "admin-chat") {
     state.data.adminChats = await API.adminChats();
     ensureAdminChat(state.data.adminChats.chats);
+  }
+
+  if (route === "admin-ai") {
+    if (!state.data.adminUsers || !state.data.adminUsers.users) state.data.adminUsers = await API.adminUsers();
+    state.data.adminAiHistory = await API.adminAiHistory();
+    // Сбрасываем выбор студента, если его больше нет в списке
+    const users = state.data.adminUsers.users || [];
+    if (state.adminAiStudentId && !users.some((u) => u.studentId === state.adminAiStudentId)) {
+      state.adminAiStudentId = "";
+      rememberAdminState();
+    }
   }
 }
 
@@ -1335,6 +1435,33 @@ function bindViewEvents(route) {
       }
     });
   });
+
+  if (route === "home") {
+    const btn = $("#aiGenerateBtn");
+    if (btn) btn.addEventListener("click", async () => {
+      const body = $("#aiAnalysisBody");
+      state.aiGenerating = true;
+      if (body) body.innerHTML = `<div class="li-sub">${esc(t("home_aiGenerating"))}</div>`;
+      try {
+        const res = await API.aiAnalyze({ lang: state.lang });
+        state.aiSummary = (res && res.summary) || "";
+      } catch (ex) {
+        state.aiSummary = ex.message === "rate_limited" ? t("ai_rateLimited") : "";
+        if (ex.message !== "rate_limited" && ex.message !== "unauthorized") toast(t("ai_error"));
+      }
+      state.aiGenerating = false;
+      // Локально перерисовываем только карточку анализа, без полной перезагрузки home,
+      // иначе loadRoute("home") перезапишет state.data.home свежими данными и мигнёт вся страница.
+      if (body) {
+        body.innerHTML = state.aiSummary != null && state.aiSummary !== ""
+          ? `<p style="margin:0;white-space:pre-wrap">${esc(state.aiSummary)}</p>`
+          : `<div class="li-sub">${t("home_aiEmpty")}</div>
+             <div style="margin-top:12px"><button class="btn btn-primary btn-sm" id="aiGenerateBtn">${t("home_aiGenerate")}</button></div>`;
+      }
+      // Перебиндим события home: навесит обработчик на заново созданную кнопку (если она есть).
+      bindViewEvents("home");
+    });
+  }
 
   if (route === "profile") {
     const photoBtn = $("#photoBtn");
@@ -1435,6 +1562,58 @@ function bindViewEvents(route) {
     });
     const box = $("#chatMsgs");
     if (box) box.scrollTop = box.scrollHeight;
+  }
+
+  if (route === "ai") {
+    const scrollAi = () => {
+      const box = $("#aiMsgs");
+      if (box) box.scrollTop = box.scrollHeight;
+    };
+    scrollAi();
+    const form = $("#aiChatForm");
+    if (form) form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const input = $("#aiChatInput");
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = "";
+      // Оптимистично добавляем сообщение пользователя и индикатор «думаю»
+      (state.data.aiHistory = state.data.aiHistory || []).push({ role: "user", text });
+      state.aiThinking = true;
+      const box = $("#aiMsgs");
+      if (box) {
+        box.insertAdjacentHTML("beforeend",
+          `<div class="msg me"><div>${esc(text)}</div></div>
+           <div class="msg them" id="aiThinkingBubble"><div class="msg-author">${esc(t("ai_title"))}</div><div>${esc(t("ai_thinking"))}</div></div>`);
+        box.scrollTop = box.scrollHeight;
+      }
+      try {
+        const res = await API.aiChat({ text, lang: state.lang });
+        // убираем индикатор и добавляем реальный ответ
+        const tb = $("#aiThinkingBubble");
+        if (tb) tb.remove();
+        if (res && res.userMsg && res.assistantMsg) {
+          // заменяем оптимистичное user-сообщение каноничным (с id/createdAt)
+          state.data.aiHistory.push(res.assistantMsg);
+          const box2 = $("#aiMsgs");
+          if (box2) {
+            box2.insertAdjacentHTML("beforeend",
+              `<div class="msg them"><div class="msg-author">${esc(t("ai_title"))}</div><div>${esc(res.assistantMsg.text)}</div></div>`);
+            box2.scrollTop = box2.scrollHeight;
+          }
+        }
+        state.aiThinking = false;
+      } catch (ex) {
+        state.aiThinking = false;
+        const tb = $("#aiThinkingBubble");
+        if (tb) tb.remove();
+        if (ex.message === "rate_limited") toast(t("ai_rateLimited"));
+        else if (ex.message !== "unauthorized") toast(t("ai_error"));
+        else return;
+        // откатываем оптимистичное сообщение при ошибке
+        await render();
+      }
+    });
   }
 
   if (route === "admin-users") {
@@ -1677,6 +1856,54 @@ function bindViewEvents(route) {
     });
     const box = $("#adminChatMsgs");
     if (box) box.scrollTop = box.scrollHeight;
+  }
+
+  if (route === "admin-ai") {
+    const scopeSel = $("#adminAiScope");
+    if (scopeSel) scopeSel.addEventListener("change", async () => {
+      state.adminAiStudentId = scopeSel.value;
+      rememberAdminState();
+      await render();
+    });
+    const aiBox = $("#adminAiMsgs");
+    if (aiBox) aiBox.scrollTop = aiBox.scrollHeight;
+    const form = $("#adminAiChatForm");
+    if (form) form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const input = $("#adminAiChatInput");
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = "";
+      (state.data.adminAiHistory = state.data.adminAiHistory || []).push({ role: "user", text });
+      const box2 = $("#adminAiMsgs");
+      if (box2) {
+        box2.insertAdjacentHTML("beforeend",
+          `<div class="msg me"><div>${esc(text)}</div></div>
+           <div class="msg them" id="adminAiThinking"><div class="msg-author">${esc(t("admin_ai_title"))}</div><div>${esc(t("ai_thinking"))}</div></div>`);
+        box2.scrollTop = box2.scrollHeight;
+      }
+      try {
+        const res = await API.adminAiChat({ text, lang: state.lang, studentId: state.adminAiStudentId });
+        const tb = $("#adminAiThinking");
+        if (tb) tb.remove();
+        if (res && res.assistantMsg) {
+          state.data.adminAiHistory.push(res.assistantMsg);
+          const box3 = $("#adminAiMsgs");
+          if (box3) {
+            box3.insertAdjacentHTML("beforeend",
+              `<div class="msg them"><div class="msg-author">${esc(t("admin_ai_title"))}</div><div>${esc(res.assistantMsg.text)}</div></div>`);
+            box3.scrollTop = box3.scrollHeight;
+          }
+        }
+      } catch (ex) {
+        const tb = $("#adminAiThinking");
+        if (tb) tb.remove();
+        if (ex.message === "rate_limited") toast(t("ai_rateLimited"));
+        else if (ex.message !== "unauthorized") toast(t("ai_error"));
+        else return;
+        await render();
+      }
+    });
   }
 
   if (route === "admin-content") {
